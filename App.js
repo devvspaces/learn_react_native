@@ -1,20 +1,48 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react'
+import { Button, Text, View } from 'react-native'
 
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
+function useInterval(callback, delayValue) {
+  const savedCallback = useRef()
+  const savedTimeout = useRef()
+  const [delay, setDelay] = useState(delayValue)
+
+  // Remember the latest callback.
+  useEffect(() => {
+    savedCallback.current = callback
+  }, [callback])
+
+  // Set up the interval.
+  useEffect(() => {
+    if (delay !== null) {
+      let id = setInterval(() => {
+        savedCallback.current()
+      }, delay)
+      savedTimeout.current = id
+      return () => clearInterval(id)
+    } else {
+      if (savedTimeout.current !== undefined){
+        clearInterval(savedTimeout.current)
+      }
+    }
+  }, [delay])
+
+  return [delay, setDelay]
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+export default function App() {
+  const [count, setCount] = useState(0)
+  let [delay, setDelay] = useInterval(() => {
+    setCount(count + 1)
+  }, 1000)
+
+  return (
+    <View>
+      <Text style={{ fontSize: 120 }}>{count}</Text>
+      <Button title={delay === null ? "PLAY" : "STOP"} onPress={
+        ()=>{
+          delay === null ? setDelay(1000) : setDelay(null)
+        }
+      } />
+    </View>
+  )
+}
